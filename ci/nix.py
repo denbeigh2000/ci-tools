@@ -11,7 +11,7 @@ from ci.constants import REPO_ROOT
 from ci import git
 
 _SYSTEM = "x86_64-linux"  # TODO: Improve this
-_REPO_ROOT_REGEX = f'^{REPO_ROOT}'
+_REPO_ROOT_REGEX = f"^{REPO_ROOT}"
 
 # TODO: singulars (e.g., devShell)
 # TODO: Maybe other evalable items I don't really use yet - checks, tasks, etc.
@@ -77,15 +77,14 @@ class Nix:
 
     @staticmethod
     def remove_absolute_flake_paths(targets: Iterable[str]) -> Iterable[str]:
-        return [
-            re.sub(_REPO_ROOT_REGEX, ".", target)
-            for target in targets
-        ]
+        return [re.sub(_REPO_ROOT_REGEX, ".", target) for target in targets]
 
     @lru_cache()
     def show_flake(self) -> Dict[str, Any]:
         proc = run(
-            ["nix", "flake", "show", "--json"], capture_output=True, cwd=REPO_ROOT
+            ["nix", "flake", "show", "--json"],
+            capture_output=True,
+            cwd=REPO_ROOT,
         )
         assert proc.stdout, "flake output empty, not in a flake directory?"
         return json.loads(proc.stdout)
@@ -111,7 +110,9 @@ class Nix:
         cmd = ["nix", "build", "--no-link"] + list(targets)
         run(cmd)
 
-    def eval_codebase(self, rev: Optional[str] = None) -> Dict[str, DerivationInfo]:
+    def eval_codebase(
+        self, rev: Optional[str] = None
+    ) -> Dict[str, DerivationInfo]:
         flake_data = self.show_flake()
         relevant_keys = set(flake_data.keys()).intersection(_EVALABLE_ITEMS)
         uri_prefix = f"{REPO_ROOT}"
@@ -138,11 +139,15 @@ class Nix:
 
             for item_key in items:
                 flake_key = f"{key}.{item_key}"
-                proc = run(["nix", "show-derivation", flake_key], capture_output=True)
+                proc = run(
+                    ["nix", "show-derivation", flake_key], capture_output=True
+                )
                 if not proc.stdout:
                     continue
 
                 info = list(json.loads(proc.stdout).values())[0]
-                targets[f'.{item_key}'] = DerivationInfo.from_json(flake_key, info)
+                targets[f".{item_key}"] = DerivationInfo.from_json(
+                    flake_key, info
+                )
 
         return targets
