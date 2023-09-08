@@ -32,7 +32,7 @@ class DerivationInfo:
     @classmethod
     def from_json(cls, key: str, data: Dict[str, Any]) -> "DerivationInfo":
         return cls(
-            name=data["env"]["name"],
+            name=data["env"].get("<unknown>"),
             derivation_path=Path(key),
             output_path=Path(data["outputs"]["out"]["path"]),
         )
