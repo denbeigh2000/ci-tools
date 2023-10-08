@@ -4,7 +4,6 @@ import click
 from ci.buildkite import build_derivations_step, upload_pipeline
 
 from ci import delta, nix
-from ci.constants import REPO_ROOT
 
 
 @click.group()
@@ -33,7 +32,9 @@ def show_unbuilt_derivations() -> None:
 @__main__.command()
 @click.option("--branch", default=None, envvar="BUILDKITE_BRANCH")
 @click.option(
-    "--base-branch", default="master", envvar="BUILDKITE_PULL_REQUEST_BASE_BRANCH"
+    "--base-branch",
+    default="master",
+    envvar="BUILDKITE_PULL_REQUEST_BASE_BRANCH",
 )
 @click.option("--commit", default=None, envvar="BUILDKITE_COMMIT")
 def show_changes(
@@ -42,7 +43,7 @@ def show_changes(
     n = nix.Nix()
     affected = delta.find_changes(n, base_branch, commit)
 
-    unsorted_path = [ str(a.derivation_path) for a in affected.values()]
+    unsorted_path = [str(a.derivation_path) for a in affected.values()]
     paths = n.remove_absolute_flake_paths(sorted(unsorted_path))
 
     for item in paths:
@@ -52,11 +53,16 @@ def show_changes(
 @__main__.command()
 @click.option("--branch", default=None, envvar="BUILDKITE_BRANCH")
 @click.option(
-    "--base-branch", default="master", envvar="BUILDKITE_PULL_REQUEST_BASE_BRANCH"
+    "--base-branch",
+    default="master",
+    envvar="BUILDKITE_PULL_REQUEST_BASE_BRANCH",
 )
 @click.option("--commit", default=None, envvar="BUILDKITE_COMMIT")
-def trigger_jobs_for_changes(branch: str, base_branch: str, commit: Optional[str]) -> None:
+def trigger_jobs_for_changes(
+    branch: str, base_branch: str, commit: Optional[str]
+) -> None:
     n = nix.Nix()
+
     if branch == "master":
         affected = n.eval_codebase(commit)
     else:

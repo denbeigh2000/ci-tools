@@ -31,11 +31,22 @@ class DerivationInfo:
 
     @classmethod
     def from_json(cls, key: str, data: Dict[str, Any]) -> "DerivationInfo":
-        return cls(
-            name=data["env"].get("<unknown>"),
-            derivation_path=Path(key),
-            output_path=Path(data["outputs"]["out"]["path"]),
-        )
+        try:
+            return cls(
+                name=data["env"].get("name", "<unknown>"),
+                derivation_path=Path(key),
+                output_path=Path(data["outputs"]["out"]["path"]),
+            )
+
+        except json.decoder.JSONDecodeError:
+            print(f"failed to decide {key}")
+            print(data)
+            raise
+
+        except IndexError:
+            print(f"failed to decode property on {key}")
+            print(data)
+            raise
 
     def is_built(self) -> bool:
         return self.output_path.exists()
@@ -102,6 +113,9 @@ class Nix:
         raw_deriv_info = run(
             ["nix", "show-derivation"] + list(targets), capture_output=True
         )
+        if not raw_deriv_info:
+            return []
+
         deriv_info = json.loads(raw_deriv_info.stdout)
 
         return [DerivationInfo.from_json(k, v) for k, v in deriv_info.items()]
